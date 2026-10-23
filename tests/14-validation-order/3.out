@@ -1,0 +1,8 @@
+OK
+OK
+OK
+OK
+REJECT claims not_yet_valid
+REJECT claims bad_iss
+REJECT claims bad_aud
+ACCEPT erin

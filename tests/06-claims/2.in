@@ -1,0 +1,9 @@
+NOW 2001
+EXPECT_ISS svc
+EXPECT_AUD api
+LEEWAY 0
+VALIDATE {"iss":"svc","aud":["api","other"],"exp":3000}
+VALIDATE {"iss":"svc","aud":["other"],"exp":3000}
+VALIDATE {"iss":"svc","aud":"api","exp":2000}
+VALIDATE {"iss":"svc","aud":"api","exp":2002,"nbf":2000}
+VALIDATE {"iss":"svc","aud":"api","exp":3000,"nbf":2002}

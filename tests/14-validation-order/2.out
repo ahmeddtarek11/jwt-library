@@ -1,0 +1,5 @@
+OK
+OK
+REJECT alg not_allowed
+REJECT alg not_allowed
+REJECT payload not_json

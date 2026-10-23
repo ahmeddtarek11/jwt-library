@@ -1,0 +1,9 @@
+access=at1 refresh=rt1
+OK alice
+access=at2 refresh=rt2
+OK alice
+REVOKED_ALL alice
+BAD revoked
+BAD revoked
+access=at3 refresh=rt3
+access=at4 refresh=rt4

@@ -1,0 +1,4 @@
+OK
+OK kid=k1
+REJECTED header_key=jwk
+REJECTED header_key=jku

@@ -1,0 +1,7 @@
+OK
+OK
+OK
+OK
+ACCEPT alice
+REJECT signature mismatch
+REJECT claims expired

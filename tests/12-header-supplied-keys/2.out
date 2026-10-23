@@ -1,0 +1,5 @@
+OK
+REJECTED header_key=x5c
+REJECTED header_key=x5u
+REJECTED unknown_kid
+REJECTED unknown_kid

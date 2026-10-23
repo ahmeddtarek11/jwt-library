@@ -1,0 +1,66 @@
+{
+  "course": "build-jwt",
+  "language": "javascript",
+  "language_id": 1063,
+  "entrypoint": "main.js",
+  "version": 1,
+  "content_hash": "ddfc778828c7bda8",
+  "lessons": [
+    {
+      "slug": "structure",
+      "tests_hash": "7a36a0237c25"
+    },
+    {
+      "slug": "header-payload",
+      "tests_hash": "3a58dc8b431a"
+    },
+    {
+      "slug": "hs256",
+      "tests_hash": "2998c583f99e"
+    },
+    {
+      "slug": "rs256",
+      "tests_hash": "8e031f3cceee"
+    },
+    {
+      "slug": "alg-confusion",
+      "tests_hash": "a4e832ca0606"
+    },
+    {
+      "slug": "claims",
+      "tests_hash": "6b0e4089ca44"
+    },
+    {
+      "slug": "key-rotation",
+      "tests_hash": "1093852baa0e"
+    },
+    {
+      "slug": "attacks",
+      "tests_hash": "fcfe51e02cdc"
+    },
+    {
+      "slug": "full-jwt",
+      "tests_hash": "bcb5d0e7bfdc"
+    },
+    {
+      "slug": "alg-none-defense",
+      "tests_hash": "8374a6af6e98"
+    },
+    {
+      "slug": "jwks-registry",
+      "tests_hash": "1b6af1770ad6"
+    },
+    {
+      "slug": "header-supplied-keys",
+      "tests_hash": "f9046c30abde"
+    },
+    {
+      "slug": "refresh-rotation",
+      "tests_hash": "2f0fec407bb3"
+    },
+    {
+      "slug": "validation-order",
+      "tests_hash": "4b49c6726150"
+    }
+  ]
+}

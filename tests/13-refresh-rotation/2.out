@@ -1,0 +1,5 @@
+access=at1 refresh=rt1
+access=at2 refresh=rt2
+access=at3 refresh=rt3
+OK carol
+BAD unknown

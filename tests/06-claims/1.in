@@ -1,0 +1,9 @@
+NOW 1000
+EXPECT_ISS app.example.com
+EXPECT_AUD api.example.com
+LEEWAY 30
+VALIDATE {"iss":"app.example.com","aud":"api.example.com","exp":2000}
+VALIDATE {"iss":"evil.com","exp":2000}
+VALIDATE {"iss":"app.example.com","exp":500}
+VALIDATE {"iss":"app.example.com","exp":970}
+VALIDATE {"iss":"app.example.com","nbf":1500}

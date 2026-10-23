@@ -1,0 +1,10 @@
+OK
+OK
+OK kid=k1
+OK kid=k2
+BAD reason=unknown_kid
+BAD reason=bad_signature
+BAD reason=unknown_kid
+OK
+BAD reason=unknown_kid
+OK kid=k2
