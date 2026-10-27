@@ -1,6 +1,36 @@
-const lines = require("fs").readFileSync(0, "utf8").split("\n");
-// TODO (structure): implement per the lesson description.
-for (const line of lines) {
-  if (!line) continue;
-  console.log("TODO");
+import { readFileSync } from 'node:fs';
+import {b64u_encode , b64u_decode} from "./src/base64url_converter.js"
+
+
+
+
+function execute(command, value) {
+  switch (command.toUpperCase()) {
+    case "ENCODE":
+      return b64u_encode(value);
+
+    case "DECODE":
+      return b64u_decode(value);
+
+    default:
+      throw new Error(`Unknown command: ${command}`);
+  }
+}
+const argumentsList = process.argv.slice(2);
+
+if (argumentsList.length > 0) {
+  const [command, ...valueParts] = argumentsList;
+  console.log(execute(command, valueParts.join(" ")));
+} else {
+  const input = readFileSync(0, "utf8");
+
+  for (const line of input.split(/\r?\n/)) {
+    if (!line) continue;
+
+    const spaceIndex = line.indexOf(" ");
+    const command = spaceIndex === -1 ? line : line.slice(0, spaceIndex);
+    const value = spaceIndex === -1 ? "" : line.slice(spaceIndex + 1);
+
+    console.log(execute(command, value));
+  }
 }
