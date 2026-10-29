@@ -1,7 +1,5 @@
 import { readFileSync } from 'node:fs';
-import {b64u_encode , b64u_decode} from "./src/base64url_converter.js"
-
-
+import {b64u_encode , b64u_decode , encode_header_and_payload} from "./src/base64url_converter.js"
 
 
 function execute(command, value) {
@@ -16,21 +14,32 @@ function execute(command, value) {
       throw new Error(`Unknown command: ${command}`);
   }
 }
+
+
 const argumentsList = process.argv.slice(2);
 
 if (argumentsList.length > 0) {
   const [command, ...valueParts] = argumentsList;
   console.log(execute(command, valueParts.join(" ")));
-} else {
+} 
+
+
+else {
   const input = readFileSync(0, "utf8");
 
   for (const line of input.split(/\r?\n/)) {
     if (!line) continue;
+    
+    if(line.includes('|')){
+      console.log(encode_header_and_payload(line));
+    }
+    else{
 
     const spaceIndex = line.indexOf(" ");
     const command = spaceIndex === -1 ? line : line.slice(0, spaceIndex);
     const value = spaceIndex === -1 ? "" : line.slice(spaceIndex + 1);
 
     console.log(execute(command, value));
+    }
   }
 }
