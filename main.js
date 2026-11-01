@@ -1,9 +1,20 @@
 import { readFileSync } from 'node:fs';
 import {b64u_encode , b64u_decode , encode_header_and_payload} from "./src/base64url_converter.js"
-import {sign , verify,verifyRs256}  from "./src/security.js"
+import { sign, verify, verifyAlg, verifyRs256 } from "./src/security.js"
+
+let registeredKey = null;
+let registeredKeyKind = null;
 
 function execute(command, value) {
   switch (command.toUpperCase()) {
+    case "KEY": {
+      const parts = value.split(" ");
+      if (parts.length !== 2) throw new Error("Invalid KEY input");
+
+      [registeredKeyKind, registeredKey] = parts;
+      return "OK";
+    }
+
     case "ENCODE":
       return b64u_encode(value);
 
@@ -19,17 +30,20 @@ function execute(command, value) {
     }
 
     case "VERIFY": {
-     const separatorIndex = value.indexOf("|");
+      const separatorIndex = value.indexOf("|");
 
-  if (separatorIndex === -1) {
-    throw new Error("Invalid VERIFY input");
-  }
+      if (separatorIndex !== -1) {
+        const token = value.slice(0, separatorIndex);
+        const key = value.slice(separatorIndex + 1);
+        return verifyToken(token, key);
+      }
 
-  const token = value.slice(0, separatorIndex);
-  const keyOrExpectedHex = value.slice(separatorIndex + 1);
+      if (registeredKey === null || registeredKeyKind === null) {
+        return "REJECTED bad_token";
+      }
 
-  return verifyToken(token, keyOrExpectedHex);
-}
+      return verifyAlg(value, registeredKey, registeredKeyKind);
+    }
 
     default:
       throw new Error(`Unknown command: ${command}`);
@@ -47,7 +61,7 @@ if (argumentsList.length > 0) {
 
 else {
   const input = readFileSync(0, "utf8");
-  const Commands = ["ENCODE", "DECODE", "SIGN", "VERIFY"];
+  const Commands = ["KEY", "ENCODE", "DECODE", "SIGN", "VERIFY"];
   for (const line of input.split(/\r?\n/)) {
     if (!line) continue;
 

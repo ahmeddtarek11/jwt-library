@@ -15,23 +15,26 @@ export function sign(header , payload , secretHex){
 }
 
 
-export function verify(token , secretHex){
+export function verify(token, secret, keyKind = "oct") {
     const tokenParts =  token.split('.');
     if (tokenParts.length !== 3) return "BAD";
 
 
     const [header, payload, signature] = tokenParts;
-    const signinginput = `${header}.${payload}`;
+    const signingInput = `${header}.${payload}`;
 
-    const expected = createHmac("sha256",Buffer.from(secretHex, "hex"))
-    .update(signinginput)
-    .digest();
+    const keyBytes = keyKind === "pub"
+      ? Buffer.from(secret, "utf8")
+      : Buffer.from(secret, "hex");
+
+    const expected = createHmac("sha256", keyBytes)
+      .update(signingInput)
+      .digest();
     const actual = Buffer.from(signature, "base64url");
 
-    if(timingSafeEqual(actual,expected)){
-        return 'OK'
-    }
-    return "BAD";
+    if (actual.length !== expected.length) return "BAD";
+
+    return timingSafeEqual(actual, expected) ? "OK" : "BAD";
 
 }
 export function verifyRs256(token, expectedSignatureHex) {
@@ -48,4 +51,51 @@ export function verifyRs256(token, expectedSignatureHex) {
     expectedSignatureHex.toLowerCase()
     ? "OK"
     : "BAD";
+}
+
+export function verifyAlg(token , key , keykind){
+    const symmetric = ["HS256", "HS384", "HS512"];
+    const asymmetric = ["RS256", "RS384", "RS512", "ES256"];
+    const parts = token.split(".");
+    if (parts.length !== 3) return "REJECTED bad_token";
+    let header;
+
+  try {
+    header = JSON.parse(b64u_decode(parts[0]));
+
+    if (
+      header === null ||
+      typeof header !== "object" ||
+      Array.isArray(header)
+    ) {
+      return "REJECTED bad_token";
+    }
+  } catch {
+    return "REJECTED bad_token";
+  }
+
+
+   const tokenAlg = header.alg;
+
+  if (
+    !symmetric.includes(tokenAlg) &&
+    !asymmetric.includes(tokenAlg)
+  ) {
+    return "REJECTED bad_alg";
+  }
+
+  if (
+    (keykind === "oct" && asymmetric.includes(tokenAlg)) ||
+    (keykind === "pub" && symmetric.includes(tokenAlg))
+  ) {
+    return "REJECTED alg_mismatch";
+  }
+
+  if (tokenAlg !== "HS256") {
+    return "REJECTED bad_alg";
+  }
+
+  return verify(token, key, keykind) === "OK"
+    ? "OK"
+    : "REJECTED bad_signature";
 }
