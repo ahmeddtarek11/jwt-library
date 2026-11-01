@@ -99,3 +99,20 @@ export function verifyAlg(token , key , keykind){
     ? "OK"
     : "REJECTED bad_signature";
 }
+
+
+export function validateClaims(now , issuer, audience, leeway ,claims){
+    if(now > claims["exp"]+leeway) return 'EXPIRED';
+    if(now  < claims['nbf']-leeway)return 'NOT_YET_VALID';
+    if(claims['iss'] != issuer) return 'BAD_ISS';
+
+    if(claims.aud !== undefined){
+        const validAud = Array.isArray(claims.aud) ? 
+        claims.aud.includes(audience) : 
+        claims.aud == audience;
+        
+         if(!validAud)return 'BAD_AUD';
+    }
+
+    return 'OK';
+}

@@ -1,9 +1,13 @@
 import { readFileSync } from 'node:fs';
 import {b64u_encode , b64u_decode , encode_header_and_payload} from "./src/base64url_converter.js"
-import { sign, verify, verifyAlg, verifyRs256 } from "./src/security.js"
+import { sign, verify, verifyAlg, verifyRs256, validateClaims } from "./src/security.js"
 
 let registeredKey = null;
 let registeredKeyKind = null;
+let now = null;
+let leeway = null;
+let expectedIss =null;
+let expectedAud = null;
 
 function execute(command, value) {
   switch (command.toUpperCase()) {
@@ -12,9 +16,32 @@ function execute(command, value) {
       if (parts.length !== 2) throw new Error("Invalid KEY input");
 
       [registeredKeyKind, registeredKey] = parts;
-      return "OK";
+      
     }
+    case "NOW":{
+        if(value === null)throw new Error("Invalid KEY input"); 
+        now = Number(value);
+        return null;
+        
+    }
+    case"EXPECT_AUD":{
+      if(value === null)throw new Error("Invalid KEY input"); 
+        expectedAud = value;
+        return null;
 
+    }
+    case "EXPECT_ISS":{
+      if(value === null)throw new Error("Invalid KEY input"); 
+        expectedIss = value;
+        return null;
+        
+    }
+    case "LEEWAY":{
+      if(value === null)throw new Error("Invalid KEY input"); 
+        leeway = Number(value);
+        return null;
+        
+    }
     case "ENCODE":
       return b64u_encode(value);
 
@@ -28,6 +55,12 @@ function execute(command, value) {
       const [header, payload, secretHex] = parts;
       return sign(header, payload, secretHex); 
     }
+
+      case "VALIDATE":{
+        const claims = JSON.parse(value);
+        return validateClaims(now , expectedIss ,expectedAud ,leeway ,claims);
+        
+      }
 
     case "VERIFY": {
       const separatorIndex = value.indexOf("|");
@@ -61,7 +94,9 @@ if (argumentsList.length > 0) {
 
 else {
   const input = readFileSync(0, "utf8");
-  const Commands = ["KEY", "ENCODE", "DECODE", "SIGN", "VERIFY"];
+  const Commands = 
+  ["KEY", "ENCODE", "DECODE", "SIGN", "VERIFY", 
+  "VALIDATE" ,"EXPECT_ISS" ,"NOW" ,"EXPECT_AUD" ,"LEEWAY"];
   for (const line of input.split(/\r?\n/)) {
     if (!line) continue;
 
@@ -73,7 +108,8 @@ else {
 
 
     if(Commands.includes(commandName)){
-    console.log(execute(command, value));
+    const result = execute(command, value);
+    if(result !== null && result !== undefined) console.log(result);
     }
     else if(line.includes('|')){
       console.log(encode_header_and_payload(line));
@@ -84,6 +120,8 @@ else {
     
   }
 }
+
+
 
 function verifyToken(token, key) {
   const headerSegment = token.split(".")[0];
