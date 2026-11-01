@@ -34,3 +34,18 @@ export function verify(token , secretHex){
     return "BAD";
 
 }
+export function verifyRs256(token, expectedSignatureHex) {
+  const parts = token.split(".");
+
+  if (parts.length !== 3) {
+    return "BAD";
+  }
+
+  const signatureBytes = Buffer.from(parts[2], "base64url");
+  const actualSignatureHex = signatureBytes.toString("hex");
+
+  return actualSignatureHex.toLowerCase() ===
+    expectedSignatureHex.toLowerCase()
+    ? "OK"
+    : "BAD";
+}

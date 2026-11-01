@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import {b64u_encode , b64u_decode , encode_header_and_payload} from "./src/base64url_converter.js"
-import {sign , verify}  from "./src/security.js"
+import {sign , verify,verifyRs256}  from "./src/security.js"
 
 function execute(command, value) {
   switch (command.toUpperCase()) {
@@ -18,13 +18,18 @@ function execute(command, value) {
       return sign(header, payload, secretHex); 
     }
 
-    case "VERIFY":{
-      const separatorIndex = value.indexOf("|");
-      if (separatorIndex === -1) throw new Error("Invalid VERIFY input");
-      const token = value.slice(0, separatorIndex);
-      const secretHex = value.slice(separatorIndex + 1);
-     return verify(token, secretHex);
-    }
+    case "VERIFY": {
+     const separatorIndex = value.indexOf("|");
+
+  if (separatorIndex === -1) {
+    throw new Error("Invalid VERIFY input");
+  }
+
+  const token = value.slice(0, separatorIndex);
+  const keyOrExpectedHex = value.slice(separatorIndex + 1);
+
+  return verifyToken(token, keyOrExpectedHex);
+}
 
     default:
       throw new Error(`Unknown command: ${command}`);
@@ -63,5 +68,21 @@ else {
     throw new Error(`Unknown input: ${line}`);
   }
     
+  }
+}
+
+function verifyToken(token, key) {
+  const headerSegment = token.split(".")[0];
+
+  try {
+    const header = JSON.parse(b64u_decode(headerSegment));
+
+    if (header.alg === "RS256") {
+      return verifyRs256(token, key);
+    }
+
+    return verify(token, key);
+  } catch {
+    return "BAD";
   }
 }
