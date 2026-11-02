@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import {b64u_encode , b64u_decode , encode_header_and_payload} from "./src/base64url_converter.js"
-import { sign, verify, verifyAlg, verifyRs256, validateClaims ,verifyWithKeyStore, lint } from "./src/security.js"
+import { sign, verify, verifyAlg, verifyRs256, validateClaims ,verifyWithKeyStore, lint, issueJwt, verifyJwt } from "./src/security.js"
 
 let registeredKey = null;
 let registeredKeyKind = null;
@@ -14,8 +14,15 @@ let keyStoreMode = false;
 function execute(command, value) {
   switch (command.toUpperCase()) {
     case "KEY": {
-    
-      const [identifier , secretHex] = value.trim().split(/\s+/);
+      const keyParts = value.trim().split(/\s+/);
+
+      if (keyParts.length === 1) {
+        registeredKey = keyParts[0];
+        registeredKeyKind = "service";
+        return "OK";
+      }
+
+      const [identifier, secretHex] = keyParts;
       if(identifier === 'oct' || identifier === 'pub'){
         registeredKeyKind = identifier;
         registeredKey = secretHex;
@@ -38,7 +45,7 @@ function execute(command, value) {
     case "NOW":{
         if(value === null)throw new Error("Invalid KEY input"); 
         now = Number(value);
-        return null;
+      return registeredKeyKind === "service" ? "OK" : null;
         
     }
     case"EXPECT_AUD":{
@@ -56,7 +63,7 @@ function execute(command, value) {
     case "LEEWAY":{
       if(value === null)throw new Error("Invalid KEY input"); 
         leeway = Number(value);
-        return null;
+      return registeredKeyKind === "service" ? "OK" : null;
         
     }
     case "ENCODE":
@@ -71,6 +78,14 @@ function execute(command, value) {
 
       const [header, payload, secretHex] = parts;
       return sign(header, payload, secretHex); 
+    }
+
+    case "ISSUE": {
+      if (registeredKeyKind !== "service" || registeredKey === null) {
+        throw new Error("No service key registered");
+      }
+
+      return issueJwt(JSON.parse(value), registeredKey, now);
     }
 
       case "VALIDATE":{
@@ -90,6 +105,10 @@ function execute(command, value) {
      
       if(keyStoreMode || tokenHasKid(value)){
         return verifyWithKeyStore(value,keystore);
+      }
+
+      if (registeredKeyKind === "service") {
+        return verifyJwt(value, registeredKey, now, leeway);
       }
 
       if (registeredKey === null || registeredKeyKind === null) {
@@ -119,7 +138,7 @@ else {
   const Commands = 
   ["KEY", "ENCODE", "DECODE", "SIGN", "VERIFY", 
   "VALIDATE" ,"EXPECT_ISS" ,"NOW" ,"EXPECT_AUD" ,"LEEWAY"
-    ,"REVOKE"
+    ,"REVOKE", "ISSUE"
 ];
   for (const line of input.split(/\r?\n/)) {
     if (!line) continue;

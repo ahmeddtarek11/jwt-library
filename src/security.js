@@ -190,3 +190,50 @@ export function lint(token) {
 
   return issues.length === 0 ? "OK" : issues.join(",");
 }
+
+export function issueJwt(claims, secretHex, now) {
+  const issuedClaims = { ...claims };
+
+  if (!Object.hasOwn(issuedClaims, "iat")) {
+    issuedClaims.iat = now;
+  }
+
+  if (!Object.hasOwn(issuedClaims, "exp")) {
+    issuedClaims.exp = issuedClaims.iat + 3600;
+  }
+
+  const header = '{"alg":"HS256","typ":"JWT"}';
+  const payload = JSON.stringify(issuedClaims);
+
+  return sign(header, payload, secretHex);
+}
+
+export function verifyJwt(token, secretHex, now, leeway) {
+  if (verify(token, secretHex) !== "OK") {
+    return "BAD_SIG";
+  }
+
+  const parts = token.split(".");
+  let claims;
+
+  try {
+    claims = JSON.parse(b64u_decode(parts[1]));
+  } catch {
+    return "BAD";
+  }
+
+  if (claims.nbf !== undefined && now < claims.nbf - leeway) {
+    return "NOT_YET_VALID";
+  }
+
+  if (claims.exp !== undefined && now > claims.exp + leeway) {
+    return "EXPIRED";
+  }
+
+  const sortedClaims = {};
+  for (const key of Object.keys(claims).sort()) {
+    sortedClaims[key] = claims[key];
+  }
+
+  return `OK ${JSON.stringify(sortedClaims)}`;
+}
