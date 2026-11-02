@@ -148,3 +148,45 @@ export function verifyWithKeyStore(value , keystore){
                                     
 
 }
+
+export function lint(token) {
+  const parts = token.split(".");
+
+  if (parts.length !== 3) {
+    return "bad_token";
+  }
+
+  let header;
+  let payload;
+
+  try {
+    header = JSON.parse(b64u_decode(parts[0]));
+    payload = JSON.parse(b64u_decode(parts[1]));
+  } catch {
+    return "bad_token";
+  }
+
+  const issues = [];
+
+  if (typeof header.alg === "string" && header.alg.toLowerCase() === "none") {
+    issues.push("alg_none");
+  }
+
+  if (!Object.hasOwn(payload, "exp")) {
+    issues.push("no_expiration");
+  }
+
+  if (
+    Object.hasOwn(payload, "exp") &&
+    Object.hasOwn(payload, "iat") &&
+    payload.exp - payload.iat > 86400
+  ) {
+    issues.push("long_lived");
+  }
+
+  if (Object.hasOwn(payload, "password") || Object.hasOwn(payload, "ssn")) {
+    issues.push("pii_in_payload");
+  }
+
+  return issues.length === 0 ? "OK" : issues.join(",");
+}

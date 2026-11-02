@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import {b64u_encode , b64u_decode , encode_header_and_payload} from "./src/base64url_converter.js"
-import { sign, verify, verifyAlg, verifyRs256, validateClaims ,verifyWithKeyStore } from "./src/security.js"
+import { sign, verify, verifyAlg, verifyRs256, validateClaims ,verifyWithKeyStore, lint } from "./src/security.js"
 
 let registeredKey = null;
 let registeredKeyKind = null;
@@ -139,7 +139,7 @@ else {
       console.log(encode_header_and_payload(line));
     }
     else {
-    throw new Error(`Unknown input: ${line}`);
+      console.log(lint(line));
   }
     
   }
