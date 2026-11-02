@@ -9,6 +9,7 @@ let leeway = null;
 let expectedIss =null;
 let expectedAud = null;
 let keystore = new Map(); 
+let keyStoreMode = false;
 
 function execute(command, value) {
   switch (command.toUpperCase()) {
@@ -21,6 +22,7 @@ function execute(command, value) {
       }
 
       else{
+        keyStoreMode = true;
         keystore.set(identifier,secretHex);
       }
       return 'OK';
@@ -29,8 +31,9 @@ function execute(command, value) {
     case "REVOKE":{
       const kid = value.trim();
       if(!kid ||  /\s/.test(kid))throw new Error("invalid input");
-      if(keystore.delete(kid)) return 'OK';
-      return 'INVALID INPUT';
+      keystore.delete(kid); 
+      return 'OK';
+      
     }
     case "NOW":{
         if(value === null)throw new Error("Invalid KEY input"); 
@@ -85,7 +88,7 @@ function execute(command, value) {
         return verifyToken(token, key);
       }
      
-      if(keystore.size > 0){
+      if(keyStoreMode){
         return verifyWithKeyStore(value,keystore);
       }
 
