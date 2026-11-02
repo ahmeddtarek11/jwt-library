@@ -209,17 +209,23 @@ export function issueJwt(claims, secretHex, now) {
 }
 
 export function verifyJwt(token, secretHex, now, leeway) {
-  if (verify(token, secretHex) !== "OK") {
-    return "BAD_SIG";
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    return "BAD";
   }
 
-  const parts = token.split(".");
+  let header;
   let claims;
 
   try {
+    header = JSON.parse(b64u_decode(parts[0]));
     claims = JSON.parse(b64u_decode(parts[1]));
   } catch {
     return "BAD";
+  }
+
+  if (verify(token, secretHex) !== "OK") {
+    return "BAD_SIG";
   }
 
   if (claims.nbf !== undefined && now < claims.nbf - leeway) {
