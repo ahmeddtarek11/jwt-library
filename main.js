@@ -88,7 +88,7 @@ function execute(command, value) {
         return verifyToken(token, key);
       }
      
-      if(keyStoreMode){
+      if(keyStoreMode || tokenHasKid(value)){
         return verifyWithKeyStore(value,keystore);
       }
 
@@ -160,5 +160,19 @@ function verifyToken(token, key) {
     return verify(token, key);
   } catch {
     return "BAD";
+  }
+}
+
+function tokenHasKid(token) {
+  const headerSegment = token.split(".")[0];
+
+  try {
+    const header = JSON.parse(b64u_decode(headerSegment));
+    return header !== null &&
+      typeof header === "object" &&
+      !Array.isArray(header) &&
+      Object.hasOwn(header, "kid");
+  } catch {
+    return false;
   }
 }
