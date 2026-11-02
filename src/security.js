@@ -210,7 +210,7 @@ export function issueJwt(claims, secretHex, now) {
 
 export function verifyJwt(token, secretHex, now, leeway) {
   if (verify(token, secretHex) !== "OK") {
-    return "BAD";
+    return "BAD_SIG";
   }
 
   const parts = token.split(".");
