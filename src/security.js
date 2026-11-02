@@ -116,3 +116,35 @@ export function validateClaims(now , issuer, audience, leeway ,claims){
 
     return 'OK';
 }
+
+export function verifyWithKeyStore(value , keystore){
+      const keyparts =value.split(".");
+      if(keyparts.length !== 3) return 'BAD reason=bad_token';
+
+
+      let decodedHeader ; 
+      try{
+      decodedHeader = JSON.parse(b64u_decode(keyparts[0]));
+      }
+      catch{
+        return "BAD reason=bad_token";
+      }
+
+      if(decodedHeader === null || typeof decodedHeader !== "object" || Array.isArray(decodedHeader))
+        return 'BAD reason=bad_token';
+
+
+
+      const keyKid = decodedHeader.kid;
+      if(keyKid === null  || keyKid=== undefined || !keystore.has(keyKid) ) return "BAD reason=unknown_kid";
+      const secretHex =keystore.get(keyKid);
+      const signingKey = `${keyparts[0]}.${keyparts[1]}`;
+      const signature = createHmac('sha256' , Buffer.from(secretHex ,'hex'))
+                                    .update(signingKey)
+                                    .digest();
+     const actualSignature = Buffer.from(keyparts[2] ,'base64url');
+     if(actualSignature.length !== signature.length) return 'BAD reason=bad_signature';
+     return timingSafeEqual(actualSignature, signature) ? `OK kid=${keyKid}` : "BAD reason=bad_signature"
+                                    
+
+}

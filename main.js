@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import {b64u_encode , b64u_decode , encode_header_and_payload} from "./src/base64url_converter.js"
-import { sign, verify, verifyAlg, verifyRs256, validateClaims } from "./src/security.js"
+import { sign, verify, verifyAlg, verifyRs256, validateClaims ,verifyWithKeyStore } from "./src/security.js"
 
 let registeredKey = null;
 let registeredKeyKind = null;
@@ -8,15 +8,29 @@ let now = null;
 let leeway = null;
 let expectedIss =null;
 let expectedAud = null;
+let keystore = new Map(); 
 
 function execute(command, value) {
   switch (command.toUpperCase()) {
     case "KEY": {
-      const parts = value.split(" ");
-      if (parts.length !== 2) throw new Error("Invalid KEY input");
+    
+      const [identifier , secretHex] = value.trim().split(/\s+/);
+      if(identifier === 'oct' || identifier === 'pub'){
+        registeredKeyKind = identifier;
+        registeredKey = secretHex;
+      }
 
-      [registeredKeyKind, registeredKey] = parts;
+      else{
+        keystore.set(identifier,secretHex);
+      }
+      return 'OK';
       
+    }
+    case "REVOKE":{
+      const kid = value.trim();
+      if(!kid ||  /\s/.test(kid))throw new Error("invalid input");
+      if(keystore.delete(kid)) return 'OK';
+      return 'INVALID INPUT';
     }
     case "NOW":{
         if(value === null)throw new Error("Invalid KEY input"); 
@@ -70,10 +84,15 @@ function execute(command, value) {
         const key = value.slice(separatorIndex + 1);
         return verifyToken(token, key);
       }
+     
+      if(keystore.size > 0){
+        return verifyWithKeyStore(value,keystore);
+      }
 
       if (registeredKey === null || registeredKeyKind === null) {
         return "REJECTED bad_token";
       }
+      
 
       return verifyAlg(value, registeredKey, registeredKeyKind);
     }
@@ -96,7 +115,9 @@ else {
   const input = readFileSync(0, "utf8");
   const Commands = 
   ["KEY", "ENCODE", "DECODE", "SIGN", "VERIFY", 
-  "VALIDATE" ,"EXPECT_ISS" ,"NOW" ,"EXPECT_AUD" ,"LEEWAY"];
+  "VALIDATE" ,"EXPECT_ISS" ,"NOW" ,"EXPECT_AUD" ,"LEEWAY"
+    ,"REVOKE"
+];
   for (const line of input.split(/\r?\n/)) {
     if (!line) continue;
 
